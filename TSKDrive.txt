@@ -1,0 +1,130 @@
+float Not(float x)
+{
+	return 1.0 - x;
+}
+
+float And(float x, float y)
+{
+	return min(x, y);
+}
+
+float Or(float x, float y)
+{
+	return max(x, y);
+}
+
+float Implicate(float x, float y)
+{
+	return min(1.0, (1.0 -x + y));
+}
+
+
+float countDistance(object robot, float angle)
+{
+	object obj;
+	obj = radar(Barrier, angle, 60, 1, 1000);
+	if(obj == null)
+	{
+		return 0;
+	}
+	    
+	
+	float dist = distance2d(obj.position, robot.position);
+	
+	return dist;
+}
+
+float leftDistanceFuzzied(object robot, float maxim)
+{
+	
+	float dist = countDistance(robot, 60);
+	return min(1, dist/maxim);
+	
+}
+
+float frontDistanceFuzzied(object robot, float maxim)
+{
+	
+	float dist = countDistance(robot, 0);
+	return min(1, dist/maxim);
+	
+}
+
+float rightDistanceFuzzied(object robot, float maxim)
+{
+	
+	float dist = countDistance(robot, -60);
+	return min(1, dist/maxim);
+	
+}
+
+float LeftToRight(float left, float right)
+{
+	return (left)/(left+right);
+}
+
+float RightToLeft(float left, float right)
+{
+	return (right)/(left+right);
+}
+
+extern void object::TSKDrive()
+{
+	float maxim = 8;
+	
+	float time;
+	
+	object me = this;
+	float L = 0;
+	float R = 0;
+	float F = 0;
+	float NL = 0;
+	float NR = 0;
+	float NF = 0;
+	
+	float y[2][8] = (
+	( 1, 0, 0, 0, 0, 1, 0, 0),
+	( 0, 1, 1, 1,-1, 0,-1, 1));
+	
+	float P[8];
+	
+	time = abstime();
+	
+	while(this.position.x < 175)
+	{
+		L = leftDistanceFuzzied(me, maxim);
+		R = rightDistanceFuzzied(me, maxim);
+		F = frontDistanceFuzzied(me, maxim);
+		NL = Not(L);
+		NR = Not(R);
+		NF = Not(F);
+		
+		
+		P[0] = And(L, And(F, R));
+		P[1] = And(L, And(F, NR));
+		P[2] = And(L, And(NF, R));
+		P[3] = And(L, And(NF, NR));
+		P[4] = And(NL, And(F, R));
+		P[5] = And(NL, And(F, NR));
+		P[6] = And(NL, And(NF, R));
+		P[7] = And(NL, And(NF, NR));
+		
+		float yF = 0;
+		float sumOfWeights = 0;
+		float yT = 0;
+		
+		for(int i=0; i<8; i++)
+		{
+			yF += y[0][i] * P[i];
+			yT += y[1][i] * P[i];
+			sumOfWeights += P[i];
+		}
+		
+		yF = yF / sumOfWeights;
+		yT + yT / sumOfWeights;
+		
+		drive(yF, yT);
+	}
+	
+	message(abstime() - time);
+}
