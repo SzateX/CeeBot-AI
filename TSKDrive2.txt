@@ -1,0 +1,195 @@
+float Not(float x)
+{
+	return 1.0 - x;
+}
+
+float And(float x, float y)
+{
+	return min(x, y);
+}
+
+float Or(float x, float y)
+{
+	return max(x, y);
+}
+
+float Implicate(float x, float y)
+{
+	return min(1.0, (1.0 -x + y));
+}
+
+
+float countDistance(object robot, float angle, float width)
+{
+	object obj;
+	obj = radar(Barrier, angle, width, 1, 1000);
+	if(obj == null)
+	{
+		return 0;
+	}
+	    
+	
+	float dist = distance2d(obj.position, robot.position);
+	
+	return dist;
+}
+
+float leftDistanceFuzzied(object robot, float maxim)
+{
+	
+	float dist = countDistance(robot, 90, 60);
+	return min(1, dist/maxim);
+	
+}
+
+float leftForwardFuzzied(object robot, float maxim)
+{
+	float dist = countDistance(robot, 45, 30);
+	return min(1, dist/maxim);
+}
+
+float frontDistanceFuzzied(object robot, float maxim)
+{
+	
+	float dist = countDistance(robot, 0, 60);
+	return min(1, dist/maxim);
+	
+}
+
+float rightForwardFuzzied(object robot, float maxim)
+{
+	float dist = countDistance(robot, -45, 30);
+	return min(1, dist/maxim);
+}
+
+float rightDistanceFuzzied(object robot, float maxim)
+{
+	
+	float dist = countDistance(robot, -90, 60);
+	return min(1, dist/maxim);
+	
+}
+
+float LeftToRight(float left, float right)
+{
+	return (left)/(left+right);
+}
+
+float RightToLeft(float left, float right)
+{
+	return (right)/(left+right);
+}
+
+extern void object::TSKDrive()
+{
+	float maxim = 10;
+	
+	float time;
+	
+	object me = this;
+	float L = 0;
+	float R = 0;
+	float F = 0;
+	float LF = 0;
+	float RF = 0;
+	float NL = 0;
+	float NR = 0;
+	float NF = 0;
+	float NLF = 0;
+	float NRF = 0;
+	
+	float y[2][32] = (
+	(1,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,1,1,1,0,0,0,0,0,1,1,1,0,0,0,0),
+	(0, 1, 1, 1, 1, 1, 1, 1, -1, 0, 0, 0, -1, 1, 1, 1, -1, 0, 0, 0, -1, 1, 1, 1, -1, 0, 0, 0, -1, -1, -1, 1));
+	
+	float P[32];
+	
+	time = abstime();
+	file handle();
+	handle.open("dupa.txt", "w");
+	while(this.position.x < 175)
+	{
+		L = leftDistanceFuzzied(me, maxim);
+		R = rightDistanceFuzzied(me, maxim);
+		F = frontDistanceFuzzied(me, maxim);
+		LF = leftForwardFuzzied(me, maxim);
+		RF = rightForwardFuzzied(me, maxim);
+		NL = Not(L);
+		NR = Not(R);
+		NF = Not(F);
+		NLF = Not(LF);
+		NRF = Not(RF);
+		
+		
+		P[0] = And(L, And(LF, And(F, And(RF, R))));
+		P[1] = And(L, And(LF, And(F, And(RF, NR))));
+		P[2] = And(L, And(LF, And(F, And(NRF, R))));
+		P[3] = And(L, And(LF, And(F, And(NRF, NR))));
+		P[4] = And(L, And(LF, And(NF, And(RF, R))));
+		P[5] = And(L, And(LF, And(NF, And(RF, NR))));
+		P[6] = And(L, And(LF, And(NF, And(NRF, R))));
+		P[7] = And(L, And(LF, And(NF, And(NRF, NR))));
+		P[8] = And(L, And(NLF, And(F, And(RF, R))));
+		P[9] = And(L, And(NLF, And(F, And(RF, NR))));
+		P[10] = And(L, And(NLF, And(F, And(NRF, R))));
+		P[11] = And(L, And(NLF, And(F, And(NRF, NR))));
+		P[12] = And(L, And(NLF, And(NF, And(RF, R))));
+		P[13] = And(L, And(NLF, And(NF, And(RF, NR))));
+		P[14] = And(L, And(NLF, And(NF, And(NRF, R))));
+		P[15] = And(L, And(NLF, And(NF, And(NRF, NR))));
+		P[16] = And(NL, And(LF, And(F, And(RF, R))));
+		P[17] = And(NL, And(LF, And(F, And(RF, NR))));
+		P[18] = And(NL, And(LF, And(F, And(NRF, R))));
+		P[19] = And(NL, And(LF, And(F, And(NRF, NR))));
+		P[20] = And(NL, And(LF, And(NF, And(RF, R))));
+		P[21] = And(NL, And(LF, And(NF, And(RF, NR))));
+		P[22] = And(NL, And(LF, And(NF, And(NRF, R))));
+		P[23] = And(NL, And(LF, And(NF, And(NRF, NR))));
+		P[24] = And(NL, And(NLF, And(F, And(RF, R))));
+		P[25] = And(NL, And(NLF, And(F, And(RF, NR))));
+		P[26] = And(NL, And(NLF, And(F, And(NRF, R))));
+		P[27] = And(NL, And(NLF, And(F, And(NRF, NR))));
+		P[28] = And(NL, And(NLF, And(NF, And(RF, R))));
+		P[29] = And(NL, And(NLF, And(NF, And(RF, NR))));
+		P[30] = And(NL, And(NLF, And(NF, And(NRF, R))));
+		P[31] = And(NL, And(NLF, And(NF, And(NRF, NR))));
+		
+		int ind = 0;
+		float val = P[0];
+		
+		float yF = 0;
+		float sumOfWeights = 0;
+		float yT = 0;
+		
+		for(int i=0; i<32; i++)
+		{
+			if(val < P[i])
+			{
+				ind = i;
+				val = P[i];
+			}
+			yF += y[0][i] * P[i];
+			yT += y[1][i] * P[i];
+			sumOfWeights += P[i];
+		}
+		
+		yF = yF / sumOfWeights;
+		yT + yT / sumOfWeights;
+		
+		string d = "Aktywna: " + ind + "," + val + "    ";
+		
+		for(int i = 0; i < 32; i++)
+		{
+			d += P[i] + "  ";
+		}
+		
+		d+=yT;
+		
+		handle.writeln(d);
+		
+		drive(yF, yT);
+	}
+	
+	handle.close();
+	message(abstime() - time);
+}
