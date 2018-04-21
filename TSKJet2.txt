@@ -1,0 +1,196 @@
+float atan2(float y, float x)
+{
+	//message(x);
+	if(x > 0)
+	    return atan(y/x);
+	if((x < 0) and (y >= 0))
+	    return atan(y/x) + 90;
+	if((x < 0) and (y < 0))
+	    return atan(y/x) - 90;
+	if((x == 0) and (y > 0))
+	    return 45;
+	if((x == 0) and (y < 0))
+	    return  -45;
+	if((x == 0) and (y == 0))
+	    return 9999999999999;
+}
+
+float Not(float x)
+{
+	return 1.0 - x;
+}
+
+float And(float x, float y)
+{
+	return min(x, y);
+}
+
+float Or(float x, float y)
+{
+	return max(x, y);
+}
+
+float Implicate(float x, float y)
+{
+	return min(1.0, (1.0 -x + y));
+}
+
+float Eq(float x, float y)
+{
+	if(x == y){
+		return 1;
+	}
+	if(x < y){
+		if (y == 0)
+		{
+			float w = -abs(x) + 1;
+			if(w < 0)
+			    return 0;
+			return w;
+		}
+		return abs(x/y);
+	}
+	if(x > y)
+	{
+		if (x == 0)
+		{
+			float w = -abs(y) + 1;
+			if(w < 0)
+			    return 0;
+			return w;
+		}
+		return abs(y/x);
+	}
+	    
+	        
+	
+	    return x/y;
+}
+
+
+float countDistance(object robot)
+{
+	object obj;
+	obj = radar(AirPoint);
+	if(obj == null)
+	{
+		return 0;
+	}
+	
+	float dist = distance(obj.position, robot.position);
+	
+	return min(1, dist/8);
+}
+
+float countPsi(object robot)
+{
+	object obj;
+	obj = radar(AirPoint);
+	if(obj == null)
+	{
+		return 0.5;
+	}
+	
+	float y = obj.position.y - robot.position.y;
+	float x = obj.position.x - robot.position.x;
+	
+	//float angle = atan2(y, x);
+	//message(angle);
+	
+	float angle = direction(obj.position);
+	
+	return (angle - (-90)) / (90 - (-90));
+	
+}
+
+float countFi(object robot)
+{
+	object obj;
+	obj = radar(AirPoint);
+	if(obj == null)
+	{
+		return 0;
+	}
+	
+	float y = obj.position.y - robot.position.y;
+	float x = obj.position.x - robot.position.x;
+	float z = obj.position.z - robot.position.z;
+	
+	float c = sqrt(x*x + y*y);
+	//message(c);
+	float angle = atan2(z, c);
+	//message(angle);
+	
+	return (angle - (-90)) / (90 - (-90));
+	
+}
+
+extern void object::TSKJet()
+{
+	object me = this;
+	
+	float Z = 0;
+	float P = 0;
+	float F = 0;
+	float HP = 0;
+	float NZ = 0;
+	float NP = 0;
+	float NF = 0;
+	
+	float y[3][12] = (
+	(-1,-1,+1,+1,+1,+1,-1,-1,0.5,0.5,+1,+1),
+	(+1,+1,+1,+1,-1,-1,+1,+1,0.5,0.5,-1,-1),
+	(+1,-1,+1,-1,+1,-1,+1,-1,+1,-1,+1,-1));
+	
+	float W[12];
+	
+	message(countFi(me));
+	
+	while(radar(AirPoint)!=null)
+	{
+		Z = countDistance(me);
+		P = countPsi(me);
+		F = countFi(me);
+		NZ = Not(Z);
+		NP = Not(P);
+		NF = Not(F);
+		HP = Eq(0.5, P);
+		//message("Z: " + Z + " P: " + P + " F: " + F);
+		
+		W[0] = And(Z, And(P, F));
+		W[1] = And(Z, And(P, NF));
+		W[2] = And(Z, And(HP, F));
+		W[3] = And(Z, And(HP, NF));
+		W[4] = And(Z, And(NP, F));
+		W[5] = And(Z, And(NP, NF));
+		W[6] = And(NZ, And(P, F));
+		W[7] = And(NZ, And(P, NF));
+		W[8] = And(NZ, And(HP, F));
+		//message("Chuj");
+		W[9] = And(NZ, And(HP, NF));
+		W[10] = And(NZ, And(NP, F));
+		W[11] = And(NZ, And(NP, NF));
+		
+		float yL = 0;
+		float yR = 0;
+		float yJ = 0;
+		float sumOfWeights = 0;
+		
+		
+		for(int i=0; i<8; i++)
+		{
+			yL += y[0][i] * W[i];
+			yR += y[1][i] * W[i];
+			yJ += y[2][i] * W[i];
+			sumOfWeights += W[i];
+		}
+		
+		yL = yL / sumOfWeights;
+		yR = yR / sumOfWeights;
+		yJ = yJ / sumOfWeights;
+		
+		motor(yL, yR);
+		jet(yJ);
+	}
+}
+
